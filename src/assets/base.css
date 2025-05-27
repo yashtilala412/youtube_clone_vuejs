@@ -1,0 +1,194 @@
+/* src/assets/base.css */
+
+/* Basic Reset & Box-Sizing */
+html, body, #app {
+  margin: 0;
+  padding: 0;
+  height: 100%; /* Make sure the app takes full viewport height */
+  font-family: 'Roboto', Arial, sans-serif; /* A more YouTube-like font */
+  box-sizing: border-box; /* Include padding and border in the element's total width and height */
+  color: #030303; /* YouTube's default text color */
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+/* Overall App Container */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: #f9f9f9; /* Light background similar to YouTube */
+}
+
+/* Header Styles */
+.app-header {
+  background-color: #ffffff;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px; /* Space between logo, search, icons */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+  position: sticky; /* Sticky header */
+  top: 0;
+  z-index: 1000; /* Ensure header is on top */
+  height: 56px; /* Typical YouTube header height */
+}
+
+.header-logo {
+  font-weight: bold;
+  font-size: 24px;
+  color: #ff0000; /* YouTube red */
+  text-decoration: none; /* For link */
+}
+
+.search-bar-container {
+  flex-grow: 1; /* Allows search bar to take available space */
+  max-width: 600px; /* Limit search bar width */
+  display: flex;
+  justify-content: center; /* Center the input within its container */
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 15px;
+  border: 1px solid #ccc;
+  border-radius: 20px 0 0 20px; /* Rounded left */
+  outline: none;
+  font-size: 16px;
+}
+
+.search-button {
+  padding: 8px 15px;
+  border: 1px solid #ccc;
+  border-left: none; /* Connects to input */
+  border-radius: 0 20px 20px 0; /* Rounded right */
+  background-color: #f0f0f0;
+  cursor: pointer;
+  font-size: 16px;
+  color: #555;
+}
+
+.search-button:hover {
+  background-color: #e0e0e0;
+}
+
+.header-icons {
+  display: flex;
+  gap: 15px;
+  font-size: 20px; /* Placeholder icon size */
+  color: #606060;
+}
+
+/* Main Content Area (Sidebar + View) */
+.main-content {
+  display: flex;
+  flex: 1; /* Allows main content to grow and fill available space */
+  padding-top: 0; /* No padding at top here, header handles it */
+}
+
+/* Sidebar Styles */
+.app-sidebar {
+  width: 240px; /* Standard YouTube sidebar width */
+  background-color: #ffffff;
+  padding: 10px 0; /* Top/bottom padding, no side padding for items to stretch */
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.05); /* CORRECTED LINE HERE */
+  overflow-y: auto; /* Enable scrolling for sidebar content */
+  flex-shrink: 0; /* Prevent sidebar from shrinking */
+  height: calc(100vh - 56px); /* Full height minus header height */
+  position: sticky;
+  top: 56px; /* Stick below the header */
+}
+.sidebar-section {
+  padding: 8px 15px;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 8px 25px; /* Deeper padding for text */
+  margin-bottom: 2px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.sidebar-item:hover {
+  background-color: #f0f0f0;
+}
+
+.sidebar-item .icon {
+    width: 24px; /* Standard icon size */
+    height: 24px;
+    background-color: #606060; /* Placeholder for icons */
+    border-radius: 3px;
+}
+
+.sidebar-divider {
+  border: none;
+  border-top: 1px solid #e0e0e0;
+  margin: 10px 0;
+}
+
+/* View Container (Main content area next to sidebar) */
+.view-container {
+  flex: 1; /* Takes remaining space */
+  padding: 20px; /* Overall padding for the content area */
+  display: flex;
+  flex-direction: column; /* For category bar above videos */
+}
+
+/* Category Bar Styles */
+.app-category-bar {
+  background-color: #ffffff;
+  padding: 10px 0;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* Lighter shadow */
+  display: flex;
+  gap: 10px; /* Space between categories */
+  overflow-x: auto; /* Enable horizontal scrolling for categories */
+  white-space: nowrap; /* Prevent categories from wrapping */
+  /* Hide scrollbar for aesthetics */
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+.app-category-bar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+
+.category-pill {
+  background-color: #e0e0e0;
+  padding: 8px 15px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  flex-shrink: 0; /* Prevent pills from shrinking */
+  color: #303030;
+}
+
+.category-pill:hover {
+  background-color: #d0d0d0;
+}
+
+.category-pill.active {
+    background-color: #030303; /* Active category color */
+    color: #ffffff;
+}
+
+/* Main Content Area (where videos will appear) */
+.content-area {
+  flex: 1; /* Takes remaining vertical space in view-container */
+  /* No specific background, relies on body background */
+  padding: 0; /* Padding is handled by view-container */
+  /* For visualization, remove later */
+  /* border: 1px dashed #aaa; */
+  /* min-height: 400px; */
+  /* display: flex; */
+  /* align-items: center; */
+  /* justify-content: center; */
+  /* color: #666; */
+}
