@@ -1,26 +1,58 @@
 <template>
   <nav class="app-category-bar">
-    <div class="category-pill active">All</div>
-    <div class="category-pill">Music</div>
-    <div class="category-pill">Gaming</div>
-    <div class="category-pill">Live</div>
-    <div class="category-pill">News</div>
-    <div class="category-pill">Sports</div>
-    <div class="category-pill">Science</div>
-    <div class="category-pill">Technology</div>
-    <div class="category-pill">Comedy</div>
-    <div class="category-pill">Travel</div>
-    <div class="category-pill">Cooking</div>
-    <div class="category-pill">Vlogs</div>
-    <div class="category-pill">Programming</div>
-    <div class="category-pill">Film & Animation</div>
-    <div class="category-pill">Cars & Vehicles</div>
-    <div class="category-pill">Education</div>
-    <div class="category-pill">Pets & Animals</div>
-    <div class="category-pill">Beauty</div>
+    <div
+      class="category-pill"
+      :class="{ active: selectedCategory === 'all' }"
+      @click="selectCategory('all')"
+    >
+      All
+    </div>
+    <div
+      v-for="category in categories"
+      :key="category.id"
+      class="category-pill"
+      :class="{ active: selectedCategory === category.id }"
+      @click="selectCategory(category.id)"
+    >
+      {{ category.snippet.title }}
+    </div>
   </nav>
 </template>
 
 <script setup>
-// No logic here, just structure and classes
+import { ref, onMounted } from 'vue';
+import { getVideoCategories } from '@/api/youtube';
+import { useRouter } from 'vue-router'; // To potentially filter videos on home page
+
+const categories = ref([]);
+const selectedCategory = ref('all'); // Default to 'All'
+const router = useRouter();
+
+onMounted(async () => {
+  try {
+    const fetchedCategories = await getVideoCategories();
+    // Filter out categories with title "Movies" or empty titles, if any
+    categories.value = fetchedCategories.filter(cat => cat.snippet.title && cat.snippet.assignable);
+  } catch (error) {
+    // Handle error, maybe display a message
+    console.error("Failed to load categories:", error);
+  }
+});
+
+const selectCategory = (categoryId) => {
+  selectedCategory.value = categoryId;
+  // TODO: Implement actual filtering of videos on the homepage
+  // For now, let's just log it or potentially navigate to a search for that category
+  console.log('Selected category:', categoryId);
+  // Example: If you wanted to search for videos in a category:
+  // if (categoryId !== 'all') {
+  //   router.push({ name: 'search', query: { q: categoryId } });
+  // } else {
+  //   router.push({ name: 'home' }); // Go back to popular videos
+  // }
+};
 </script>
+
+<style scoped>
+/* No additional styles here, rely on base.css */
+</style>
