@@ -1,26 +1,26 @@
 <template>
-  <div class="comment-section">
-    <h3>{{ comments.length }} Comments</h3>
-    <div v-if="comments.length > 0" class="comment-list">
-      <div v-for="commentThread in comments" :key="commentThread.id" class="comment-item">
+  <div class="mt-8 md:mt-10 lg:mt-12">
+    <h3 class="text-xl font-semibold mb-5">{{ comments.length }} Comments</h3>
+    <div v-if="comments.length > 0" class="flex flex-col gap-5">
+      <div v-for="commentThread in comments" :key="commentThread.id" class="flex items-start gap-4">
         <img
           :src="commentThread.snippet.topLevelComment.snippet.authorProfileImageUrl"
           alt="Avatar"
-          class="comment-avatar"
+          class="w-10 h-10 rounded-full object-cover flex-shrink-0"
         />
-        <div class="comment-content">
-          <div class="comment-author-info">
-            <span class="comment-author">{{ commentThread.snippet.topLevelComment.snippet.authorDisplayName }}</span>
-            <span class="comment-published">{{ formatDate(commentThread.snippet.topLevelComment.snippet.publishedAt) }}</span>
+        <div class="flex-grow">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="font-semibold text-sm">{{ commentThread.snippet.topLevelComment.snippet.authorDisplayName }}</span>
+            <span class="text-xs text-gray-600">{{ formatDate(commentThread.snippet.topLevelComment.snippet.publishedAt) }}</span>
           </div>
-          <p class="comment-text" v-html="commentThread.snippet.topLevelComment.snippet.textDisplay"></p>
-          <div class="comment-actions">
+          <p class="text-sm leading-relaxed m-0" v-html="commentThread.snippet.topLevelComment.snippet.textDisplay"></p>
+          <div class="text-xs text-gray-600 mt-1">
             <span>Likes: {{ commentThread.snippet.topLevelComment.snippet.likeCount }}</span>
-            </div>
+          </div>
         </div>
       </div>
     </div>
-    <div v-else>
+    <div v-else class="text-gray-600">
       <p>No comments found for this video.</p>
     </div>
   </div>
@@ -36,7 +36,7 @@ const props = defineProps({
   },
 });
 
-// Helper function to format date (e.g., 2 days ago) - copied from VideoCard
+// Helper function to format date (e.g., 2 days ago)
 const formatDate = (dateString) => {
   if (!dateString) return '';
   const date = new Date(dateString);
@@ -53,67 +53,3 @@ const formatDate = (dateString) => {
   return `${diffYears} year${diffYears > 1 ? 's' : ''} ago`;
 };
 </script>
-
-<style scoped>
-.comment-section {
-  margin-top: 30px;
-}
-
-.comment-section h3 {
-  font-size: 1.3em;
-  margin-bottom: 20px;
-}
-
-.comment-list {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.comment-item {
-  display: flex;
-  gap: 15px;
-  align-items: flex-start;
-}
-
-.comment-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex-shrink: 0;
-}
-
-.comment-content {
-  flex-grow: 1;
-}
-
-.comment-author-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 5px;
-}
-
-.comment-author {
-  font-weight: 600;
-  font-size: 0.95em;
-}
-
-.comment-published {
-  font-size: 0.85em;
-  color: #606060;
-}
-
-.comment-text {
-  font-size: 0.95em;
-  line-height: 1.4;
-  margin: 0;
-}
-
-.comment-actions {
-  font-size: 0.85em;
-  color: #606060;
-  margin-top: 5px;
-}
-</style>

@@ -1,18 +1,27 @@
 <template>
-  <header class="app-header">
-    <a href="/" class="header-logo">YouTube Clone</a>
-    <div class="search-bar-container">
+  <header class="bg-white p-3 md:px-5 lg:px-6 flex items-center justify-between shadow-md sticky top-0 z-50 h-14">
+    <a href="/" class="font-bold text-xl md:text-2xl text-yt-red flex-shrink-0 mr-4">YouTube Clone</a>
+
+    <div class="flex-grow max-w-sm md:max-w-xl mx-auto flex">
       <input
         type="text"
         placeholder="Search"
-        class="search-input"
+        class="w-full p-2.5 px-4 border border-gray-300 rounded-l-full outline-none focus:border-blue-500 text-sm md:text-base"
         v-model="searchQuery"
         @keyup.enter="performSearch"
       />
-      <button class="search-button" @click="performSearch">Search</button>
+      <button
+        class="p-2.5 px-4 border border-gray-300 border-l-0 rounded-r-full bg-gray-100 cursor-pointer text-gray-600 hover:bg-gray-200 text-sm md:text-base"
+        @click="performSearch"
+      >
+        Search
+      </button>
     </div>
-    <div class="header-icons">
-      <span>&#9733;</span> <span>&#9881;</span> </div>
+
+    <div class="flex gap-4 text-xl text-gray-600 ml-4 flex-shrink-0">
+      <span>★</span>
+      <span>⚙</span>
+    </div>
   </header>
 </template>
 
@@ -26,11 +35,7 @@ const router = useRouter();
 const performSearch = () => {
   if (searchQuery.value.trim()) {
     router.push({ name: 'search', query: { q: searchQuery.value.trim() } });
-    searchQuery.value = ''; // Clear search bar after search
+    searchQuery.value = '';
   }
 };
 </script>
-
-<style scoped>
-/* No additional styles here, rely on base.css */
-</style>

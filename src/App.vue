@@ -1,9 +1,9 @@
 <template>
-  <div class="app-container">
+  <div class="flex flex-col min-h-screen bg-gray-100 text-gray-900">
     <AppHeader />
-    <div class="main-content">
+    <div class="flex flex-1 pt-0">
       <AppSidebar />
-      <div class="view-container">
+      <div class="flex-1 p-4 md:p-6 lg:p-8 flex flex-col overflow-auto">
         <AppCategoryBar />
         <RouterView />
       </div>
@@ -17,7 +17,3 @@ import AppSidebar from '@/components/layout/AppSidebar.vue';
 import AppCategoryBar from '@/components/layout/AppCategoryBar.vue';
 import { RouterView } from 'vue-router';
 </script>
-
-<style>
-/* No additional styles here, base.css handles everything */
-</style>
