@@ -1,11 +1,10 @@
 // src/api/youtube.js
 import axios from 'axios';
 
-// Access the API key from environment variables
-const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY;
+const API_KEY = import.meta.env.VITE_YOUTUBE_API_KEY; 
 const BASE_URL = 'https://www.googleapis.com/youtube/v3';
 
-// Create an Axios instance with base URL and API key
+// Helper to make API requests
 const youtubeApi = axios.create({
   baseURL: BASE_URL,
   params: {
@@ -15,32 +14,31 @@ const youtubeApi = axios.create({
 
 /**
  * Fetches popular videos.
- * @param {number} maxResults - Number of results to fetch (default: 20)
- * @param {string} regionCode - Region for trending videos (default: 'US')
- * @returns {Array} List of video items.
+ * @param {number} maxResults - Number of results to return (default: 25).
+ * @returns {Promise<Object>} API response data.
  */
-export const getPopularVideos = async (maxResults = 20, regionCode = 'US') => {
+export const getPopularVideos = async (maxResults = 25) => {
   try {
     const response = await youtubeApi.get('/videos', {
       params: {
         part: 'snippet,contentDetails,statistics',
         chart: 'mostPopular',
-        regionCode: regionCode,
+        regionCode: 'US', // Or your preferred region code
         maxResults: maxResults,
       },
     });
-    return response.data.items;
+    return response.data;
   } catch (error) {
-    console.error('Error fetching popular videos:', error);
-    throw error; // Re-throw to allow component to handle
+    console.error("Error fetching popular videos:", error);
+    throw error;
   }
 };
 
 /**
- * Searches for videos.
- * @param {string} query - The search query.
- * @param {number} maxResults - Number of results to fetch (default: 20)
- * @returns {Array} List of search result items.
+ * Searches for videos based on a query.
+ * @param {string} query - The search term.
+ * @param {number} maxResults - Number of results to return (default: 20).
+ * @returns {Promise<Object>} API response data.
  */
 export const searchVideos = async (query, maxResults = 20) => {
   try {
@@ -48,13 +46,13 @@ export const searchVideos = async (query, maxResults = 20) => {
       params: {
         part: 'snippet',
         q: query,
-        type: 'video', // Only search for videos
+        type: 'video', // Ensure only videos are searched
         maxResults: maxResults,
       },
     });
-    return response.data.items;
+    return response.data;
   } catch (error) {
-    console.error('Error searching videos:', error);
+    console.error(`Error searching for videos with query "${query}":`, error);
     throw error;
   }
 };
@@ -62,19 +60,19 @@ export const searchVideos = async (query, maxResults = 20) => {
 /**
  * Fetches details for a specific video.
  * @param {string} videoId - The ID of the video.
- * @returns {Object} Video details.
+ * @returns {Promise<Object>} API response data.
  */
 export const getVideoDetails = async (videoId) => {
   try {
     const response = await youtubeApi.get('/videos', {
       params: {
-        part: 'snippet,statistics,contentDetails', // include contentDetails for duration
+        part: 'snippet,contentDetails,statistics',
         id: videoId,
       },
     });
-    return response.data.items[0]; // Should return a single video object
+    return response.data;
   } catch (error) {
-    console.error('Error fetching video details for ID:', videoId, error);
+    console.error(`Error fetching video details for ID "${videoId}":`, error);
     throw error;
   }
 };
@@ -82,7 +80,7 @@ export const getVideoDetails = async (videoId) => {
 /**
  * Fetches details for a specific channel.
  * @param {string} channelId - The ID of the channel.
- * @returns {Object} Channel details.
+ * @returns {Promise<Object>} API response data.
  */
 export const getChannelDetails = async (channelId) => {
   try {
@@ -92,9 +90,32 @@ export const getChannelDetails = async (channelId) => {
         id: channelId,
       },
     });
-    return response.data.items[0]; // Should return a single channel object
+    return response.data;
   } catch (error) {
-    console.error('Error fetching channel details for ID:', channelId, error);
+    console.error(`Error fetching channel details for ID "${channelId}":`, error);
+    throw error;
+  }
+};
+
+/**
+ * Fetches related videos for a given video.
+ * @param {string} videoId - The ID of the primary video.
+ * @param {number} maxResults - Number of results to return (default: 10).
+ * @returns {Promise<Object>} API response data.
+ */
+export const getRelatedVideos = async (videoId, maxResults = 10) => {
+  try {
+    const response = await youtubeApi.get('/search', {
+      params: {
+        part: 'snippet',
+        relatedToVideoId: videoId,
+        type: 'video', // Ensure only videos are returned
+        maxResults: maxResults,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching related videos for ID "${videoId}":`, error);
     throw error;
   }
 };
@@ -102,31 +123,33 @@ export const getChannelDetails = async (channelId) => {
 /**
  * Fetches comments for a specific video.
  * @param {string} videoId - The ID of the video.
- * @param {number} maxResults - Number of comments to fetch (default: 20)
- * @returns {Array} List of comment thread items.
+ * @param {number} maxResults - Number of results to return (default: 20).
+ * @returns {Promise<Object>} API response data.
  */
-export const getComments = async (videoId, maxResults = 20) => {
+export const getCommentsOfVideo = async (videoId, maxResults = 20) => {
   try {
     const response = await youtubeApi.get('/commentThreads', {
       params: {
         part: 'snippet',
         videoId: videoId,
         maxResults: maxResults,
+        textFormat: 'html', // To get formatted comment text
       },
     });
-    return response.data.items;
+    return response.data;
   } catch (error) {
-    console.error('Error fetching comments for video ID:', videoId, error);
-    // YouTube Data API has limitations on comments. Some videos might not have comments enabled,
-    // or the API might return an error if too many requests are made.
-    return []; // Return empty array on error for comments to not break the page
+    console.error(`Error fetching comments for video ID "${videoId}":`, error);
+    // YouTube Data API might return 403 if comments are disabled for a video
+    // or if the API key lacks permission. Handle gracefully.
+    return { items: [] }; // Return empty array if comments cannot be fetched
   }
 };
 
+
 /**
- * Fetches a list of video categories.
- * @param {string} regionCode - Region for categories (default: 'US')
- * @returns {Array} List of video category items.
+ * Fetches video categories.
+ * @param {string} regionCode - Region code (e.g., 'US', 'IN').
+ * @returns {Promise<Object>} API response data.
  */
 export const getVideoCategories = async (regionCode = 'US') => {
   try {
@@ -136,9 +159,9 @@ export const getVideoCategories = async (regionCode = 'US') => {
         regionCode: regionCode,
       },
     });
-    return response.data.items;
+    return response.data;
   } catch (error) {
-    console.error('Error fetching video categories:', error);
+    console.error(`Error fetching video categories for region "${regionCode}":`, error);
     throw error;
   }
 };

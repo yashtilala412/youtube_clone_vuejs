@@ -1,236 +1,151 @@
 <template>
-  <main class="content-area video-detail-page">
-    <div v-if="loading" class="loading-message">Loading video details...</div>
-    <div v-else-if="error" class="error-message">Error: {{ error }}</div>
-    <div v-else-if="video" class="video-container">
-      <div class="video-player-wrapper">
-        <iframe
-          class="video-player"
-          :src="`https://www.youtube.com/embed/${video.id}?autoplay=1`"
-          frameborder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowfullscreen
-        ></iframe>
-      </div>
-
-      <h1 class="video-detail-title">{{ video.snippet.title }}</h1>
-
-      <div class="video-stats">
-        <span>{{ formatViewCount(video.statistics?.viewCount) }} views</span>
-        <div class="like-dislike-buttons">
-            <button class="like-button">👍 {{ formatLikes(video.statistics?.likeCount) }}</button>
-            <button class="dislike-button">👎</button>
+  <div class="flex flex-col lg:flex-row gap-6 p-4 md:p-6 lg:p-8">
+    <div class="flex-1 lg:max-w-3xl">
+      <div v-if="video" class="mb-6">
+        <div class="relative w-full pb-[56.25%] bg-black rounded-lg overflow-hidden">
+          <iframe
+            :src="`https://www.youtube.com/embed/${video.id}?autoplay=1`"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowfullscreen
+            class="absolute top-0 left-0 w-full h-full"
+          ></iframe>
         </div>
+        <h1 class="text-xl md:text-2xl font-bold mt-4 mb-2">{{ video.snippet.title }}</h1>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm text-gray-600 mb-4 gap-2 sm:gap-4">
+          <div class="flex items-center gap-4">
+            <span>{{ formatViewCount(video.statistics?.viewCount) }}</span>
+            <span>{{ formatDate(video.snippet.publishedAt) }}</span>
+          </div>
+          <div class="flex flex-wrap gap-x-4 gap-y-2 justify-end sm:justify-normal">
+            <span class="flex items-center"><span class="mr-1">👍</span> {{ formatLikeCount(video.statistics?.likeCount) }}</span>
+            <span class="flex items-center"><span class="mr-1">👎</span> Dislike</span>
+            <span class="flex items-center"><span class="mr-1">🔗</span> Share</span>
+            <span class="flex items-center"><span class="mr-1">📥</span> Download</span>
+          </div>
+        </div>
+        <ChannelInfo :channel="channel" />
+        <p class="text-sm mt-4 leading-relaxed whitespace-pre-wrap">{{ video.snippet.description }}</p>
       </div>
-
-      <ChannelInfo :channel="channel" />
-
-      <div class="video-description">
-        <h3>Description</h3>
-        <pre>{{ video.snippet.description }}</pre>
+      <div v-else-if="loading" class="text-center text-gray-500 text-lg py-10">
+        Loading video details...
       </div>
-
+      <div v-else class="text-center text-gray-500 text-lg py-10">
+        Video not found.
+      </div>
       <CommentSection :comments="comments" />
     </div>
-    <div v-else class="no-results-message">Video not found.</div>
-  </main>
+
+    <div class="lg:w-80 lg:flex-shrink-0">
+      <h3 class="text-lg font-semibold mb-4 hidden lg:block">Up Next</h3>
+      <div v-if="relatedVideos.length > 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-1 gap-4">
+        <VideoCard
+          v-for="relatedVideo in relatedVideos"
+          :key="relatedVideo.id.videoId"
+          :video="relatedVideo"
+        />
+      </div>
+      <div v-else-if="loading" class="text-center text-gray-500 text-base py-5">
+        Loading related videos...
+      </div>
+      <div v-else class="text-center text-gray-500 text-base py-5">
+        No related videos found.
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
-import { getVideoDetails, getChannelDetails, getComments } from '@/api/youtube';
+import { getVideoDetails, getChannelDetails, getRelatedVideos, getCommentsOfVideo } from '@/api/youtube';
 import ChannelInfo from '@/components/ChannelInfo.vue';
 import CommentSection from '@/components/CommentSection.vue';
-
-// Remove this import if you see the warning: `@vue/compiler-sfc] 'defineProps' is a compiler macro and no longer needs to be imported.`
-// import { defineProps } from 'vue'; 
+import VideoCard from '@/components/VideoCard.vue';
 
 const route = useRoute();
 const video = ref(null);
 const channel = ref(null);
 const comments = ref([]);
+const relatedVideos = ref([]);
 const loading = ref(true);
-const error = ref(null);
 
 const fetchVideoData = async (videoId) => {
   loading.value = true;
-  error.value = null;
   video.value = null;
   channel.value = null;
   comments.value = [];
-
-  if (!videoId) {
-    error.value = 'No video ID provided.';
-    loading.value = false;
-    return;
-  }
+  relatedVideos.value = [];
 
   try {
-    const videoData = await getVideoDetails(videoId);
-    video.value = videoData;
+    // Fetch video details
+    const videoResponse = await getVideoDetails(videoId);
+    video.value = videoResponse.items[0];
 
-    if (videoData && videoData.snippet.channelId) {
-      const channelData = await getChannelDetails(videoData.snippet.channelId);
-      channel.value = channelData;
+    if (video.value) {
+      // Fetch channel details
+      const channelResponse = await getChannelDetails(video.value.snippet.channelId);
+      channel.value = channelResponse.items[0];
+
+      // Fetch comments
+      const commentsResponse = await getCommentsOfVideo(videoId);
+      comments.value = commentsResponse.items;
+
+      // Fetch related videos
+      const relatedVideosResponse = await getRelatedVideos(videoId);
+      // Filter out non-video results from related videos
+      relatedVideos.value = relatedVideosResponse.items.filter(item => item.id.kind === 'youtube#video');
     }
-
-    const commentsData = await getComments(videoId);
-    comments.value = commentsData;
-
-  } catch (err) {
-    error.value = err.message || 'Failed to load video details.';
-    console.error(err);
+  } catch (error) {
+    console.error("Failed to load video details:", error);
   } finally {
     loading.value = false;
   }
 };
 
-// Watch for changes in the route params 'id'
+// Watch for changes in the route params (video ID)
 watch(
   () => route.params.id,
-  (newId) => {
-    fetchVideoData(newId);
+  async (newId) => {
+    if (newId) {
+      await fetchVideoData(newId);
+    }
   },
-  { immediate: true } // Fetch data immediately when component mounts
+  { immediate: true } // Run immediately on component mount
 );
 
-// Helper functions (copied from VideoCard for now, can be refactored to a utility file)
+
+// Helper functions (for formatting counts and dates)
 const formatViewCount = (count) => {
+  if (!count) return '0 views';
+  const num = parseInt(count);
+  if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'B views';
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M views';
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'K views';
+  return num.toLocaleString() + ' views';
+};
+
+const formatLikeCount = (count) => {
   if (!count) return '0';
   const num = parseInt(count);
-  if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'B';
   if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-  if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+  if (num >= 1000) return (num / 1000).toFixed(0) + 'K';
   return num.toLocaleString();
 };
 
-const formatLikes = (count) => {
-    if (!count) return '0';
-    const num = parseInt(count);
-    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-    if (num >= 1000) return (num / 1000).toFixed(0) + 'K';
-    return num.toLocaleString();
+const formatDate = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffTime = Math.abs(now - date);
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const diffMonths = Math.ceil(diffDays / 30);
+  const diffYears = Math.ceil(diffDays / 365);
+
+  if (diffDays < 1) return 'Today';
+  if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  if (diffDays < 30) return `${Math.ceil(diffDays / 7)} week${Math.ceil(diffDays / 7) > 1 ? 's' : ''} ago`;
+  if (diffMonths < 12) return `${diffMonths} month${diffMonths > 1 ? 's' : ''} ago`;
+  return `${diffYears} year${diffYears > 1 ? 's' : ''} ago`;
 };
 </script>
-
-<style scoped>
-.video-detail-page {
-  max-width: 1200px; /* Max width for content on detail page */
-  margin: 0 auto; /* Center content */
-}
-
-.video-player-wrapper {
-  position: relative;
-  width: 100%;
-  padding-bottom: 56.25%; /* 16:9 Aspect Ratio (9 / 16 * 100) */
-  height: 0;
-  overflow: hidden;
-  background-color: #000;
-}
-
-.video-player {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  border: 0;
-}
-
-.video-detail-title {
-  font-size: 1.6em;
-  font-weight: 600;
-  margin: 15px 0 10px 0;
-  line-height: 1.3;
-}
-
-.video-stats {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.95em;
-  color: #606060;
-  padding-bottom: 15px;
-  border-bottom: 1px solid #eee;
-}
-
-.like-dislike-buttons {
-    display: flex;
-    gap: 10px;
-}
-
-.like-button, .dislike-button {
-    background-color: #f0f0f0;
-    border: none;
-    padding: 8px 15px;
-    border-radius: 20px;
-    cursor: pointer;
-    font-weight: 600;
-    color: #303030;
-}
-
-.like-button:hover, .dislike-button:hover {
-    background-color: #e0e0e0;
-}
-
-.video-description {
-  margin-top: 20px;
-  background-color: #f0f0f0;
-  padding: 15px;
-  border-radius: 8px;
-  line-height: 1.5;
-  white-space: pre-wrap; /* Preserves formatting (line breaks) */
-  font-size: 0.95em;
-  color: #303030;
-}
-
-.video-description h3 {
-  font-size: 1.1em;
-  margin-top: 0;
-  margin-bottom: 10px;
-  color: #030303;
-}
-
-/* Comments section styles are in CommentSection.vue */
-
-/* Responsive adjustments */
-@media (max-width: 1024px) {
-  .video-detail-page {
-    padding: 0 15px;
-  }
-}
-@media (max-width: 768px) {
-    .video-detail-page {
-        margin: 0;
-        max-width: 100%;
-        padding: 0;
-    }
-    .video-detail-title {
-        font-size: 1.3em;
-        padding: 0 15px;
-    }
-    .video-stats {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 10px 15px;
-    }
-    .like-dislike-buttons {
-        margin-top: 10px;
-        width: 100%;
-        justify-content: center;
-    }
-    .channel-info {
-        padding: 15px;
-    }
-    .video-description {
-        padding: 15px;
-        margin-left: 15px;
-        margin-right: 15px;
-    }
-    .comment-section {
-        margin-left: 15px;
-        margin-right: 15px;
-    }
-}
-</style>
